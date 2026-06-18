@@ -1,3 +1,3 @@
-from .main import SQLAlchemyUserStore
+from .store import SQLAlchemyUserStore
 
 __all__ = ["SQLAlchemyUserStore"]
