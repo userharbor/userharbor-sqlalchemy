@@ -1,10 +1,23 @@
-# UserHarbor SQLAlchemy
+<picture>
+  <img src="https://github.com/userharbor/userharbor/raw/master/docs/assets/logo-full.png" alt="userharbor">
+</picture>
+
+[![GitHub License](https://img.shields.io/github/license/userharbor/userharbor-sqlalchemy)](https://github.com/userharbor/userharbor-sqlalchemy?tab=MIT-1-ov-file)
+[![Tests](https://img.shields.io/github/actions/workflow/status/userharbor/userharbor-sqlalchemy/publish.yml?label=tests)](https://github.com/userharbor/userharbor-sqlalchemy/blob/master/.github/workflows/tests.yml)
+[![Codecov](https://img.shields.io/codecov/c/github/userharbor/userharbor-sqlalchemy)](https://codecov.io/gh/userharbor/userharbor-sqlalchemy)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/userharbor-sqlalchemy)](https://pypi.org/project/userharbor-sqlalchemy)
+[![PyPI - Version](https://img.shields.io/pypi/v/userharbor-sqlalchemy)](https://pypi.org/project/userharbor-sqlalchemy)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-black)](https://github.com/psf/black)
+[![Linting: Ruff](https://img.shields.io/badge/linting-Ruff-black?logo=ruff&logoColor=black)](https://github.com/astral-sh/ruff)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
+[![Pytest](https://img.shields.io/badge/testing-Pytest-red?logo=pytest&logoColor=red)](https://docs.pytest.org/)
+[![Material for MkDocs](https://img.shields.io/badge/docs-Material%20for%20MkDocs-yellow?logo=MaterialForMkDocs&logoColor=yellow)](https://spaceshaman.github.io/userharbor/)
 
 > **Project status:** UserHarbor SQLAlchemy is currently in an early stage of development.
 > The API may change frequently. The library is not ready for production use yet.
 
 `userharbor-sqlalchemy` provides a SQLAlchemy-based `UserStore` implementation for
-[`userharbor`](https://github.com/userharbor/userharbor).
+[`userharbor`](https://github.com/userharbor/userharbor-sqlalchemy).
 
 It stores:
 
