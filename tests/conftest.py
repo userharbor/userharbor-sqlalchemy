@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from datetime import datetime
 
 import pytest
@@ -19,7 +19,7 @@ from userharbor_sqlalchemy.store import SQLAlchemyUserStore
 
 
 @pytest.fixture
-def engine() -> Engine:
+def engine() -> Iterator[Engine]:
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},
