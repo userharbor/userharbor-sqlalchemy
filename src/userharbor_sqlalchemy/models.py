@@ -1,12 +1,15 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Protocol
+from typing import ClassVar, Protocol
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.schema import MetaData
 
 
 class UserModelProtocol(Protocol):
+    __tablename__: ClassVar[str]
+    metadata: ClassVar[MetaData]
     username: Mapped[str]
     email: Mapped[str]
     password_hash: Mapped[str]
@@ -31,6 +34,9 @@ class Models:
 def create_models(user_model: type[UserModelProtocol] | None = None) -> Models:
     class UserHarborBase(DeclarativeBase):
         pass
+
+    if user_model is not None:
+        UserHarborBase.metadata = user_model.metadata
 
     if not user_model:
 
