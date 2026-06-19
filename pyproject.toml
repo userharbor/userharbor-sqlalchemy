@@ -29,11 +29,11 @@ classifiers = [
 ]
 dependencies = [
   "sqlalchemy>=2.0.51",
-  "userharbor>=0.1.0",
+  "userharbor>=0.1.1",
 ]
 
 [project.urls]
-Documentation = "https://github.com/userharbor/userharbor-sqlalchemy"
+Documentation = "https://userharbor.github.io/userharbor"
 Homepage = "https://github.com/userharbor/userharbor-sqlalchemy"
 Repository = "https://github.com/userharbor/userharbor-sqlalchemy"
 
