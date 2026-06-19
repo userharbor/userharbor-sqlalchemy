@@ -7,15 +7,19 @@ from sqlalchemy.orm import Session
 from sqlalchemy.schema import MetaData
 from userharbor.interfaces import CreateUserRequest, User, UserStore, UserToken
 
-from .models import create_models
+from .models import UserModelProtocol, create_models
 
 SessionFactory = Callable[[], Session]
 
 
 class SQLAlchemyUserStore(UserStore):
-    def __init__(self, session_factory: SessionFactory) -> None:
+    def __init__(
+        self,
+        session_factory: SessionFactory,
+        user_models: type[UserModelProtocol] | None = None,
+    ) -> None:
         self._session_factory = session_factory
-        self._models = create_models()
+        self._models = create_models(user_models)
         self._current_session: ContextVar[Session | None] = ContextVar(
             "userharbor_current_session",
             default=None,

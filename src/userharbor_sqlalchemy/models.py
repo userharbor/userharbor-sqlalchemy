@@ -28,36 +28,38 @@ class Models:
     PasswordResetModel: type[TokenModelProtocol]
 
 
-def create_models(user_model: type[DeclarativeBase] | None = None) -> Models:
+def create_models(user_model: type[UserModelProtocol] | None = None) -> Models:
     class UserHarborBase(DeclarativeBase):
         pass
 
-    UserHarborBase.metadata
+    if not user_model:
 
-    class UserModel(UserHarborBase):
-        __tablename__ = "userharbor_users"
+        class UserModel(UserHarborBase):
+            __tablename__ = "userharbor_users"
 
-        username: Mapped[str] = mapped_column(String(255), primary_key=True)
-        email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
-        password_hash: Mapped[str] = mapped_column(String(512))
-        verified: Mapped[bool] = mapped_column(Boolean, default=False)
+            username: Mapped[str] = mapped_column(String(255), primary_key=True)
+            email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
+            password_hash: Mapped[str] = mapped_column(String(512))
+            verified: Mapped[bool] = mapped_column(Boolean, default=False)
 
-        email_verifications: Mapped[list["EmailVerificationModel"]] = relationship(
-            cascade="all, delete-orphan"
-        )
-        sessions: Mapped[list["SessionModel"]] = relationship(
-            cascade="all, delete-orphan"
-        )
-        password_resets: Mapped[list["PasswordResetModel"]] = relationship(
-            cascade="all, delete-orphan"
-        )
+            email_verifications: Mapped[list["EmailVerificationModel"]] = relationship(
+                cascade="all, delete-orphan"
+            )
+            sessions: Mapped[list["SessionModel"]] = relationship(
+                cascade="all, delete-orphan"
+            )
+            password_resets: Mapped[list["PasswordResetModel"]] = relationship(
+                cascade="all, delete-orphan"
+            )
+
+        user_model = UserModel
 
     class EmailVerificationModel(UserHarborBase):
         __tablename__ = "userharbor_email_verifications"
 
         token_hash: Mapped[str] = mapped_column(String(128), primary_key=True)
         username: Mapped[str] = mapped_column(
-            ForeignKey("userharbor_users.username", ondelete="CASCADE"),
+            ForeignKey(f"{user_model.__tablename__}.username", ondelete="CASCADE"),
             index=True,
         )
         expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
@@ -67,7 +69,7 @@ def create_models(user_model: type[DeclarativeBase] | None = None) -> Models:
 
         token_hash: Mapped[str] = mapped_column(String(128), primary_key=True)
         username: Mapped[str] = mapped_column(
-            ForeignKey("userharbor_users.username", ondelete="CASCADE"),
+            ForeignKey(f"{user_model.__tablename__}.username", ondelete="CASCADE"),
             index=True,
         )
         expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
@@ -77,14 +79,14 @@ def create_models(user_model: type[DeclarativeBase] | None = None) -> Models:
 
         token_hash: Mapped[str] = mapped_column(String(128), primary_key=True)
         username: Mapped[str] = mapped_column(
-            ForeignKey("userharbor_users.username", ondelete="CASCADE"),
+            ForeignKey(f"{user_model.__tablename__}.username", ondelete="CASCADE"),
             index=True,
         )
         expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
     return Models(
         Base=UserHarborBase,
-        UserModel=UserModel,
+        UserModel=user_model,
         EmailVerificationModel=EmailVerificationModel,
         SessionModel=SessionModel,
         PasswordResetModel=PasswordResetModel,
