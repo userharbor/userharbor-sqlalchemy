@@ -1,25 +1,50 @@
-from userharbor_sqlalchemy.store import SQLAlchemyUserStore
+from datetime import datetime
 
-from conftest import get_email_verification
+from sqlalchemy.orm import Session
+from userharbor.interfaces import CreateUserRequest
+
+from userharbor_sqlalchemy.store import SQLAlchemyUserStore
 
 
 def test_remove_email_verification_deletes_token(
     store: SQLAlchemyUserStore,
-    existing_user,
-    read_session,
+    session: Session,
 ) -> None:
+    store.create_user(
+        CreateUserRequest(
+            username="alice",
+            email="alice@example.com",
+            password_hash="password-hash",
+            verification_token_hash="verification-token-hash",
+            expires_at=datetime(2030, 1, 1, 12, 0, 0),
+        )
+    )
+
     store.remove_email_verification("verification-token-hash")
 
-    with read_session() as session:
-        assert get_email_verification(session) is None
+    assert (
+        session.get(store._models.EmailVerificationModel, "verification-token-hash")
+        is None
+    )
 
 
 def test_remove_email_verification_ignores_missing_token(
     store: SQLAlchemyUserStore,
-    existing_user,
-    read_session,
+    session: Session,
 ) -> None:
+    store.create_user(
+        CreateUserRequest(
+            username="alice",
+            email="alice@example.com",
+            password_hash="password-hash",
+            verification_token_hash="verification-token-hash",
+            expires_at=datetime(2030, 1, 1, 12, 0, 0),
+        )
+    )
+
     store.remove_email_verification("missing")
 
-    with read_session() as session:
-        assert get_email_verification(session) is not None
+    assert (
+        session.get(store._models.EmailVerificationModel, "verification-token-hash")
+        is not None
+    )

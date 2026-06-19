@@ -1,38 +1,43 @@
-from userharbor.interfaces import UserToken
+from datetime import datetime
+
+from sqlalchemy.orm import Session
+from userharbor.interfaces import CreateUserRequest, UserToken
 
 from userharbor_sqlalchemy.store import SQLAlchemyUserStore
-
-from conftest import (
-    get_email_verification,
-    get_password_reset,
-    get_session_token,
-    get_user,
-)
 
 
 def test_delete_user_removes_user_and_related_tokens(
     store: SQLAlchemyUserStore,
-    existing_user,
-    expires_at,
-    read_session,
+    session: Session,
 ) -> None:
+    expires_at = datetime(2030, 1, 1, 12, 0, 0)
+    store.create_user(
+        CreateUserRequest(
+            username="alice",
+            email="alice@example.com",
+            password_hash="password-hash",
+            verification_token_hash="verification-token-hash",
+            expires_at=expires_at,
+        )
+    )
     store.add_session(UserToken("alice", "session-token-hash", expires_at))
     store.set_password_reset(UserToken("alice", "reset-token-hash", expires_at))
 
     store.delete_user("alice")
 
-    with read_session() as session:
-        assert get_user(session) is None
-        assert get_email_verification(session) is None
-        assert get_session_token(session, "session-token-hash") is None
-        assert get_password_reset(session, "reset-token-hash") is None
+    assert session.get(store._models.UserModel, "alice") is None
+    assert (
+        session.get(store._models.EmailVerificationModel, "verification-token-hash")
+        is None
+    )
+    assert session.get(store._models.SessionModel, "session-token-hash") is None
+    assert session.get(store._models.PasswordResetModel, "reset-token-hash") is None
 
 
 def test_delete_user_ignores_missing_user(
     store: SQLAlchemyUserStore,
-    read_session,
+    session: Session,
 ) -> None:
     store.delete_user("missing")
 
-    with read_session() as session:
-        assert get_user(session, "missing") is None
+    assert session.get(store._models.UserModel, "missing") is None

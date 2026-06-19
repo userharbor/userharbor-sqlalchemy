@@ -1,21 +1,31 @@
+from datetime import datetime
+
 import pytest
+from sqlalchemy.orm import Session
+from userharbor.interfaces import CreateUserRequest
 
 from userharbor_sqlalchemy.store import SQLAlchemyUserStore
-
-from conftest import get_user
 
 
 def test_set_password_hash_updates_stored_hash(
     store: SQLAlchemyUserStore,
-    existing_user,
-    read_session,
+    session: Session,
 ) -> None:
+    store.create_user(
+        CreateUserRequest(
+            username="alice",
+            email="alice@example.com",
+            password_hash="password-hash",
+            verification_token_hash="verification-token-hash",
+            expires_at=datetime(2030, 1, 1, 12, 0, 0),
+        )
+    )
+
     store.set_password_hash("alice", "new-password-hash")
 
-    with read_session() as session:
-        user = get_user(session)
-        assert user is not None
-        assert user.password_hash == "new-password-hash"
+    user = session.get(store._models.UserModel, "alice")
+    assert user is not None
+    assert user.password_hash == "new-password-hash"
 
 
 def test_set_password_hash_raises_for_missing_user(

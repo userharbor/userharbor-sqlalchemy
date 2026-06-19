@@ -4,14 +4,10 @@ from contextvars import ContextVar
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.schema import MetaData
 from userharbor.interfaces import CreateUserRequest, User, UserStore, UserToken
 
-from .models import (
-    EmailVerificationModel,
-    PasswordResetModel,
-    SessionModel,
-    UserModel,
-)
+from .models import create_models
 
 SessionFactory = Callable[[], Session]
 
@@ -19,10 +15,15 @@ SessionFactory = Callable[[], Session]
 class SQLAlchemyUserStore(UserStore):
     def __init__(self, session_factory: SessionFactory) -> None:
         self._session_factory = session_factory
+        self._models = create_models()
         self._current_session: ContextVar[Session | None] = ContextVar(
             "userharbor_current_session",
             default=None,
         )
+
+    @property
+    def metadata(self) -> MetaData:
+        return self._models.Base.metadata
 
     @contextmanager
     def transaction(self) -> Iterator[None]:
@@ -59,7 +60,7 @@ class SQLAlchemyUserStore(UserStore):
     def create_user(self, user: CreateUserRequest) -> None:
         with self._session_scope() as session:
             session.add(
-                UserModel(
+                self._models.UserModel(
                     username=user.username,
                     email=user.email,
                     password_hash=user.password_hash,
@@ -67,7 +68,7 @@ class SQLAlchemyUserStore(UserStore):
                 )
             )
             session.add(
-                EmailVerificationModel(
+                self._models.EmailVerificationModel(
                     username=user.username,
                     token_hash=user.verification_token_hash,
                     expires_at=user.expires_at,
@@ -76,35 +77,39 @@ class SQLAlchemyUserStore(UserStore):
 
     def set_user_verified(self, username: str) -> None:
         with self._session_scope() as session:
-            user = session.get(UserModel, username)
+            user = session.get(self._models.UserModel, username)
             if user:
                 user.verified = True
 
     def delete_user(self, username: str) -> None:
         with self._session_scope() as session:
-            user = session.get(UserModel, username)
+            user = session.get(self._models.UserModel, username)
             if user:
                 session.delete(user)
 
     def get_user_by_username(self, username: str) -> User | None:
         with self._session_scope() as session:
-            user = session.get(UserModel, username)
+            user = session.get(self._models.UserModel, username)
             return _to_user(user) if user else None
 
     def get_user_by_email(self, email: str) -> User | None:
         with self._session_scope() as session:
-            user = session.scalar(select(UserModel).where(UserModel.email == email))
+            user = session.scalar(
+                select(self._models.UserModel).where(
+                    self._models.UserModel.email == email
+                )
+            )
             return _to_user(user) if user else None
 
     def get_email_verification(self, token_hash: str) -> UserToken | None:
         with self._session_scope() as session:
-            verification = session.get(EmailVerificationModel, token_hash)
+            verification = session.get(self._models.EmailVerificationModel, token_hash)
             return _to_user_token(verification) if verification else None
 
     def set_email_verification(self, verification: UserToken) -> None:
         with self._session_scope() as session:
             session.add(
-                EmailVerificationModel(
+                self._models.EmailVerificationModel(
                     username=verification.username,
                     token_hash=verification.token_hash,
                     expires_at=verification.expires_at,
@@ -113,19 +118,19 @@ class SQLAlchemyUserStore(UserStore):
 
     def remove_email_verification(self, token_hash: str) -> None:
         with self._session_scope() as session:
-            verification = session.get(EmailVerificationModel, token_hash)
+            verification = session.get(self._models.EmailVerificationModel, token_hash)
             if verification:
                 session.delete(verification)
 
     def get_session(self, token_hash: str) -> UserToken | None:
         with self._session_scope() as session:
-            user_session = session.get(SessionModel, token_hash)
+            user_session = session.get(self._models.SessionModel, token_hash)
             return _to_user_token(user_session) if user_session else None
 
     def add_session(self, session: UserToken) -> None:
         with self._session_scope() as _session:
             _session.add(
-                SessionModel(
+                self._models.SessionModel(
                     username=session.username,
                     token_hash=session.token_hash,
                     expires_at=session.expires_at,
@@ -134,41 +139,43 @@ class SQLAlchemyUserStore(UserStore):
 
     def remove_session(self, token_hash: str) -> None:
         with self._session_scope() as session:
-            user_session = session.get(SessionModel, token_hash)
+            user_session = session.get(self._models.SessionModel, token_hash)
             if user_session:
                 session.delete(user_session)
 
     def remove_all_sessions(self, username: str) -> None:
         with self._session_scope() as session:
             sessions = session.scalars(
-                select(SessionModel).where(SessionModel.username == username)
+                select(self._models.SessionModel).where(
+                    self._models.SessionModel.username == username
+                )
             )
             for user_session in sessions:
                 session.delete(user_session)
 
     def get_password_hash(self, username: str) -> str:
         with self._session_scope() as session:
-            user = session.get(UserModel, username)
+            user = session.get(self._models.UserModel, username)
             if not user:
                 raise KeyError(f"User not found: {username}")
             return user.password_hash
 
     def set_password_hash(self, username: str, password_hash: str) -> None:
         with self._session_scope() as session:
-            user = session.get(UserModel, username)
+            user = session.get(self._models.UserModel, username)
             if not user:
                 raise KeyError(f"User not found: {username}")
             user.password_hash = password_hash
 
     def get_password_reset(self, token_hash: str) -> UserToken | None:
         with self._session_scope() as session:
-            reset = session.get(PasswordResetModel, token_hash)
+            reset = session.get(self._models.PasswordResetModel, token_hash)
             return _to_user_token(reset) if reset else None
 
     def set_password_reset(self, reset: UserToken) -> None:
         with self._session_scope() as session:
             session.add(
-                PasswordResetModel(
+                self._models.PasswordResetModel(
                     username=reset.username,
                     token_hash=reset.token_hash,
                     expires_at=reset.expires_at,
@@ -177,12 +184,12 @@ class SQLAlchemyUserStore(UserStore):
 
     def remove_password_reset(self, token_hash: str) -> None:
         with self._session_scope() as session:
-            reset = session.get(PasswordResetModel, token_hash)
+            reset = session.get(self._models.PasswordResetModel, token_hash)
             if reset:
                 session.delete(reset)
 
 
-def _to_user(model: UserModel) -> User:
+def _to_user(model) -> User:
     return User(
         username=model.username,
         email=model.email,
@@ -190,9 +197,7 @@ def _to_user(model: UserModel) -> User:
     )
 
 
-def _to_user_token(
-    model: EmailVerificationModel | SessionModel | PasswordResetModel,
-) -> UserToken:
+def _to_user_token(model) -> UserToken:
     return UserToken(
         username=model.username,
         token_hash=model.token_hash,
