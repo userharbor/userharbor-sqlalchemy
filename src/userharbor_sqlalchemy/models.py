@@ -1,22 +1,38 @@
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Protocol
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
-@dataclass
+class UserModelProtocol(Protocol):
+    username: Mapped[str]
+    email: Mapped[str]
+    password_hash: Mapped[str]
+    verified: Mapped[bool]
+
+
+class TokenModelProtocol(Protocol):
+    token_hash: Mapped[str]
+    username: Mapped[str]
+    expires_at: Mapped[datetime]
+
+
+@dataclass(frozen=True)
 class Models:
     Base: type[DeclarativeBase]
-    UserModel: type[DeclarativeBase]
-    EmailVerificationModel: type[DeclarativeBase]
-    SessionModel: type[DeclarativeBase]
-    PasswordResetModel: type[DeclarativeBase]
+    UserModel: type[UserModelProtocol]
+    EmailVerificationModel: type[TokenModelProtocol]
+    SessionModel: type[TokenModelProtocol]
+    PasswordResetModel: type[TokenModelProtocol]
 
 
 def create_models(user_model: type[DeclarativeBase] | None = None) -> Models:
     class UserHarborBase(DeclarativeBase):
         pass
+
+    UserHarborBase.metadata
 
     class UserModel(UserHarborBase):
         __tablename__ = "userharbor_users"
