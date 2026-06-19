@@ -1,25 +1,34 @@
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
+from typing import Callable, Generic, TypeVar, cast
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.schema import MetaData
 from userharbor.interfaces import CreateUserRequest, User, UserStore, UserToken
 
+from .mappers import default_user_mapper, token_mapper
 from .models import UserModelProtocol, create_models
 
 SessionFactory = Callable[[], Session]
 
+UserT = TypeVar("UserT", bound=User)
 
-class SQLAlchemyUserStore(UserStore):
+
+class SQLAlchemyUserStore(UserStore, Generic[UserT]):
     def __init__(
         self,
         session_factory: SessionFactory,
-        user_models: type[UserModelProtocol] | None = None,
+        user_model: type[UserModelProtocol] | None = None,
+        user_mapper: Callable[[UserModelProtocol], UserT] | None = None,
     ) -> None:
         self._session_factory = session_factory
-        self._models = create_models(user_models)
+        self._models = create_models(user_model)
+        self._user_mapper = user_mapper or cast(
+            Callable[[UserModelProtocol], UserT],
+            default_user_mapper,
+        )
         self._current_session: ContextVar[Session | None] = ContextVar(
             "userharbor_current_session",
             default=None,
@@ -91,24 +100,24 @@ class SQLAlchemyUserStore(UserStore):
             if user:
                 session.delete(user)
 
-    def get_user_by_username(self, username: str) -> User | None:
+    def get_user_by_username(self, username: str) -> UserT | None:
         with self._session_scope() as session:
             user = session.get(self._models.UserModel, username)
-            return _to_user(user) if user else None
+            return self._user_mapper(user) if user else None
 
-    def get_user_by_email(self, email: str) -> User | None:
+    def get_user_by_email(self, email: str) -> UserT | None:
         with self._session_scope() as session:
             user = session.scalar(
                 select(self._models.UserModel).where(
                     self._models.UserModel.email == email
                 )
             )
-            return _to_user(user) if user else None
+            return self._user_mapper(user) if user else None
 
     def get_email_verification(self, token_hash: str) -> UserToken | None:
         with self._session_scope() as session:
             verification = session.get(self._models.EmailVerificationModel, token_hash)
-            return _to_user_token(verification) if verification else None
+            return token_mapper(verification) if verification else None
 
     def set_email_verification(self, verification: UserToken) -> None:
         with self._session_scope() as session:
@@ -129,7 +138,7 @@ class SQLAlchemyUserStore(UserStore):
     def get_session(self, token_hash: str) -> UserToken | None:
         with self._session_scope() as session:
             user_session = session.get(self._models.SessionModel, token_hash)
-            return _to_user_token(user_session) if user_session else None
+            return token_mapper(user_session) if user_session else None
 
     def add_session(self, session: UserToken) -> None:
         with self._session_scope() as _session:
@@ -174,7 +183,7 @@ class SQLAlchemyUserStore(UserStore):
     def get_password_reset(self, token_hash: str) -> UserToken | None:
         with self._session_scope() as session:
             reset = session.get(self._models.PasswordResetModel, token_hash)
-            return _to_user_token(reset) if reset else None
+            return token_mapper(reset) if reset else None
 
     def set_password_reset(self, reset: UserToken) -> None:
         with self._session_scope() as session:
@@ -191,19 +200,3 @@ class SQLAlchemyUserStore(UserStore):
             reset = session.get(self._models.PasswordResetModel, token_hash)
             if reset:
                 session.delete(reset)
-
-
-def _to_user(model) -> User:
-    return User(
-        username=model.username,
-        email=model.email,
-        verified=model.verified,
-    )
-
-
-def _to_user_token(model) -> UserToken:
-    return UserToken(
-        username=model.username,
-        token_hash=model.token_hash,
-        expires_at=model.expires_at,
-    )
