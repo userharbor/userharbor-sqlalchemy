@@ -556,19 +556,19 @@ wheels = [
 
 [[package]]
 name = "userharbor"
-version = "0.2.0"
+version = "0.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pwdlib", extra = ["argon2"] },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f2/6f/a1f94bd0f139dcb10c1dfc8d21c56035de0445b64171227a066acc751231/userharbor-0.2.0.tar.gz", hash = "sha256:17ae19b97c9049b07852eabbf0faa0c17570d1bd25fd57c58e44ad49ac777ebb", size = 6597, upload-time = "2026-06-19T06:40:43.439Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4b/07/11aaf14fd9e7c7bd90c3eda1c9e8ddc8fa4cf2e5342316261ff4f8e0fa99/userharbor-0.2.1.tar.gz", hash = "sha256:b4355d14c888abad9abd21573f59a1065c7855bc1fcddd510eca9a2e3ab99e53", size = 6635, upload-time = "2026-06-21T16:14:41.799Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ff/d3/e55c88a6b74d5e1417b416ff3ae555d6284dbcb87a8e4a9394016f764cd1/userharbor-0.2.0-py3-none-any.whl", hash = "sha256:8d1b93e2a348d86a617a0bd714bcc1c529c44feb5be6a3103fe9008b7936a551", size = 8376, upload-time = "2026-06-19T06:40:42.447Z" },
+    { url = "https://files.pythonhosted.org/packages/49/29/3dfcf50db2304ea1f9c29d76c9c330b17cdc3b355219acdf92b295061e90/userharbor-0.2.1-py3-none-any.whl", hash = "sha256:f1cb90a913d2019ff432fa4973a19631f32a14dc58e0d060c577cc9b3a4cb20c", size = 8433, upload-time = "2026-06-21T16:14:40.933Z" },
 ]
 
 [[package]]
 name = "userharbor-sqlalchemy"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "sqlalchemy" },
@@ -584,7 +584,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "sqlalchemy", specifier = ">=2.0.51" },
-    { name = "userharbor", specifier = ">=0.1.1" },
+    { name = "userharbor", specifier = ">=0.2.1" },
 ]
 
 [package.metadata.requires-dev]

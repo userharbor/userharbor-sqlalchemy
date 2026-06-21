@@ -1,6 +1,15 @@
-from userharbor.interfaces import User, UserToken
+from dataclasses import dataclass
+
+from userharbor.interfaces import UserToken
 
 from .models import TokenModelProtocol, UserModelProtocol
+
+
+@dataclass(frozen=True)
+class User:
+    username: str
+    email: str
+    verified: bool
 
 
 def default_user_mapper(model: UserModelProtocol) -> User:

@@ -5,7 +5,7 @@ from typing import cast
 from sqlalchemy import Boolean, String, create_engine, event
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 from sqlalchemy.pool import StaticPool
-from userharbor.interfaces import CreateUserRequest, User
+from userharbor.interfaces import CreateUserRequest
 
 from userharbor_sqlalchemy.models import UserModelProtocol
 from userharbor_sqlalchemy.store import SQLAlchemyUserStore
@@ -26,7 +26,10 @@ class AppUser(AppBase):
 
 
 @dataclass
-class AppPublicUser(User):
+class AppPublicUser:
+    username: str
+    email: str
+    verified: bool
     display_name: str
 
 

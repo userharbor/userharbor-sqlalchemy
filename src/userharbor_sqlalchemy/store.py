@@ -1,22 +1,20 @@
 from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
-from typing import Callable, Generic, TypeVar, cast
+from typing import Callable, Generic, cast
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.schema import MetaData
-from userharbor.interfaces import CreateUserRequest, User, UserStore, UserToken
+from userharbor.interfaces import CreateUserRequest, UserStore, UserT, UserToken
 
 from .mappers import default_user_mapper, token_mapper
 from .models import UserModelProtocol, create_models
 
 SessionFactory = Callable[[], Session]
 
-UserT = TypeVar("UserT", bound=User)
 
-
-class SQLAlchemyUserStore(UserStore, Generic[UserT]):
+class SQLAlchemyUserStore(UserStore[UserT], Generic[UserT]):
     def __init__(
         self,
         session_factory: SessionFactory,

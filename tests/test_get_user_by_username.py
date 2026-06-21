@@ -1,7 +1,8 @@
 from datetime import datetime
 
-from userharbor.interfaces import CreateUserRequest, User
+from userharbor.interfaces import CreateUserRequest
 
+from userharbor_sqlalchemy.mappers import User
 from userharbor_sqlalchemy.store import SQLAlchemyUserStore
 
 
