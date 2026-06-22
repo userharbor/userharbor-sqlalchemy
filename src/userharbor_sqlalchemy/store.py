@@ -1,6 +1,7 @@
 from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
+from datetime import datetime
 from typing import Callable, Generic, cast
 
 from sqlalchemy import select
@@ -163,6 +164,12 @@ class SQLAlchemyUserStore(UserStore[UserT], Generic[UserT]):
             )
             for user_session in sessions:
                 session.delete(user_session)
+
+    def refresh_session(self, token_hash: str, new_expires_at: datetime) -> None:
+        with self._session_scope() as session:
+            user_session = session.get(self._models.SessionModel, token_hash)
+            if user_session:
+                user_session.expires_at = new_expires_at
 
     def get_password_hash(self, username: str) -> str:
         with self._session_scope() as session:
