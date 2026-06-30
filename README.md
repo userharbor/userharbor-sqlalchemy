@@ -25,7 +25,11 @@ It stores:
 * email verification tokens,
 * sessions,
 * password reset tokens,
-* password hashes.
+* password hashes,
+* roles,
+* permissions,
+* user-to-role assignments,
+* role-to-permission assignments.
 
 The package only handles persistence. It does not send emails, expose HTTP endpoints,
 or implement application-specific authentication flows.
@@ -49,7 +53,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from userharbor import UserHarbor
 from userharbor_sqlalchemy import SQLAlchemyUserStore
-from userharbor_sqlalchemy.models import UserHarborBase
 
 
 class EmailSender:
@@ -69,13 +72,21 @@ class EmailSender:
     ) -> None:
         print(f"Send password reset token to {email}: {reset_token}")
 
+    def send_email_verified(self, username: str, email: str) -> None:
+        print(f"Email verified for {email}")
+
+    def send_password_changed(self, username: str, email: str) -> None:
+        print(f"Password changed for {email}")
+
+    def send_account_deleted(self, username: str, email: str) -> None:
+        print(f"Account deleted for {email}")
+
 
 engine = create_engine("sqlite:///users.db")
 SessionLocal = sessionmaker(bind=engine)
 
-UserHarborBase.metadata.create_all(engine)
-
 store = SQLAlchemyUserStore(SessionLocal)
+store.metadata.create_all(engine)
 email_sender = EmailSender()
 
 harbor = UserHarbor(
@@ -100,6 +111,14 @@ session_token = harbor.login(
 current_user = harbor.get_current_user(session_token)
 print(current_user.username)
 
+harbor.roles.create("admin")
+harbor.permissions.create("users.delete")
+harbor.roles.grant_permission("admin", "users.delete")
+harbor.grant_role("jane", "admin")
+
+if harbor.has_permission(session_token, "users.delete"):
+    print("User can delete users")
+
 harbor.logout(session_token)
 ```
 
@@ -112,8 +131,8 @@ verification and password reset messages through your email provider.
 
 `SQLAlchemyUserStore.transaction()` provides a transaction context used by
 UserHarbor for multi-step operations such as email verification, password reset,
-password change, and account deletion. Successful blocks are committed; exceptions
-roll back all changes from the block.
+password change, account deletion, and role or permission assignment. Successful
+blocks are committed; exceptions roll back all changes from the block.
 
 ---
 

@@ -93,6 +93,14 @@ def test_store_uses_custom_user_model_and_mapper() -> None:
             display_name="Anonymous",
         )
         assert store.get_email_verification("verification-token-hash") is not None
+
+        store.create_role("admin")
+        store.create_permission("users.delete")
+        store.grant_permission_to_role("admin", "users.delete")
+        store.grant_role_to_user("alice", "admin")
+
+        assert store.get_user_roles("alice") == {"admin"}
+        assert store.get_user_permissions("alice") == {"users.delete"}
     finally:
         store.metadata.drop_all(engine)
         engine.dispose()

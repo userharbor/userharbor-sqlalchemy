@@ -4,7 +4,7 @@ from contextvars import ContextVar
 from datetime import datetime
 from typing import Callable, Generic, cast
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 from sqlalchemy.schema import MetaData
 from userharbor.interfaces import CreateUserRequest, UserStore, UserT, UserToken
@@ -205,3 +205,123 @@ class SQLAlchemyUserStore(UserStore[UserT], Generic[UserT]):
             reset = session.get(self._models.PasswordResetModel, token_hash)
             if reset:
                 session.delete(reset)
+
+    def create_role(self, role: str) -> None:
+        with self._session_scope() as session:
+            session.add(self._models.RoleModel(role=role))
+
+    def delete_role(self, role: str) -> None:
+        with self._session_scope() as session:
+            session.execute(
+                delete(self._models.UserRoleModel).where(
+                    self._models.UserRoleModel.role == role
+                )
+            )
+            session.execute(
+                delete(self._models.RolePermissionModel).where(
+                    self._models.RolePermissionModel.role == role
+                )
+            )
+            role_model = session.get(self._models.RoleModel, role)
+            if role_model:
+                session.delete(role_model)
+
+    def list_roles(self) -> set[str]:
+        with self._session_scope() as session:
+            return set(session.scalars(select(self._models.RoleModel.role)))
+
+    def role_exists(self, role: str) -> bool:
+        with self._session_scope() as session:
+            return session.get(self._models.RoleModel, role) is not None
+
+    def grant_role_to_user(self, username: str, role: str) -> None:
+        with self._session_scope() as session:
+            user_role = session.get(self._models.UserRoleModel, (username, role))
+            if not user_role:
+                session.add(self._models.UserRoleModel(username=username, role=role))
+
+    def revoke_role_from_user(self, username: str, role: str) -> None:
+        with self._session_scope() as session:
+            user_role = session.get(self._models.UserRoleModel, (username, role))
+            if user_role:
+                session.delete(user_role)
+
+    def get_user_roles(self, username: str) -> set[str]:
+        with self._session_scope() as session:
+            return set(
+                session.scalars(
+                    select(self._models.UserRoleModel.role).where(
+                        self._models.UserRoleModel.username == username
+                    )
+                )
+            )
+
+    def create_permission(self, permission: str) -> None:
+        with self._session_scope() as session:
+            session.add(self._models.PermissionModel(permission=permission))
+
+    def delete_permission(self, permission: str) -> None:
+        with self._session_scope() as session:
+            session.execute(
+                delete(self._models.RolePermissionModel).where(
+                    self._models.RolePermissionModel.permission == permission
+                )
+            )
+            permission_model = session.get(self._models.PermissionModel, permission)
+            if permission_model:
+                session.delete(permission_model)
+
+    def list_permissions(self) -> set[str]:
+        with self._session_scope() as session:
+            return set(session.scalars(select(self._models.PermissionModel.permission)))
+
+    def permission_exists(self, permission: str) -> bool:
+        with self._session_scope() as session:
+            return session.get(self._models.PermissionModel, permission) is not None
+
+    def grant_permission_to_role(self, role: str, permission: str) -> None:
+        with self._session_scope() as session:
+            role_permission = session.get(
+                self._models.RolePermissionModel,
+                (role, permission),
+            )
+            if not role_permission:
+                session.add(
+                    self._models.RolePermissionModel(
+                        role=role,
+                        permission=permission,
+                    )
+                )
+
+    def revoke_permission_from_role(self, role: str, permission: str) -> None:
+        with self._session_scope() as session:
+            role_permission = session.get(
+                self._models.RolePermissionModel,
+                (role, permission),
+            )
+            if role_permission:
+                session.delete(role_permission)
+
+    def get_role_permissions(self, role: str) -> set[str]:
+        with self._session_scope() as session:
+            return set(
+                session.scalars(
+                    select(self._models.RolePermissionModel.permission).where(
+                        self._models.RolePermissionModel.role == role
+                    )
+                )
+            )
+
+    def get_user_permissions(self, username: str) -> set[str]:
+        with self._session_scope() as session:
+            return set(
+                session.scalars(
+                    select(self._models.RolePermissionModel.permission)
+                    .join(
+                        self._models.UserRoleModel,
+                        self._models.UserRoleModel.role
+                        == self._models.RolePermissionModel.role,
+                    )
+                    .where(self._models.UserRoleModel.username == username)
+                )
+            )

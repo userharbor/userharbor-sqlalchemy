@@ -22,6 +22,24 @@ class TokenModelProtocol(Protocol):
     expires_at: Mapped[datetime]
 
 
+class RoleModelProtocol(Protocol):
+    role: Mapped[str]
+
+
+class PermissionModelProtocol(Protocol):
+    permission: Mapped[str]
+
+
+class UserRoleModelProtocol(Protocol):
+    username: Mapped[str]
+    role: Mapped[str]
+
+
+class RolePermissionModelProtocol(Protocol):
+    role: Mapped[str]
+    permission: Mapped[str]
+
+
 @dataclass(frozen=True)
 class Models:
     Base: type[DeclarativeBase]
@@ -29,6 +47,10 @@ class Models:
     EmailVerificationModel: type[TokenModelProtocol]
     SessionModel: type[TokenModelProtocol]
     PasswordResetModel: type[TokenModelProtocol]
+    RoleModel: type[RoleModelProtocol]
+    PermissionModel: type[PermissionModelProtocol]
+    UserRoleModel: type[UserRoleModelProtocol]
+    RolePermissionModel: type[RolePermissionModelProtocol]
 
 
 def create_models(user_model: type[UserModelProtocol] | None = None) -> Models:
@@ -90,10 +112,48 @@ def create_models(user_model: type[UserModelProtocol] | None = None) -> Models:
         )
         expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
+    class RoleModel(UserHarborBase):
+        __tablename__ = "userharbor_roles"
+
+        role: Mapped[str] = mapped_column(String(255), primary_key=True)
+
+    class PermissionModel(UserHarborBase):
+        __tablename__ = "userharbor_permissions"
+
+        permission: Mapped[str] = mapped_column(String(255), primary_key=True)
+
+    class UserRoleModel(UserHarborBase):
+        __tablename__ = "userharbor_user_roles"
+
+        username: Mapped[str] = mapped_column(
+            ForeignKey(f"{user_model.__tablename__}.username", ondelete="CASCADE"),
+            primary_key=True,
+        )
+        role: Mapped[str] = mapped_column(
+            ForeignKey("userharbor_roles.role", ondelete="CASCADE"),
+            primary_key=True,
+        )
+
+    class RolePermissionModel(UserHarborBase):
+        __tablename__ = "userharbor_role_permissions"
+
+        role: Mapped[str] = mapped_column(
+            ForeignKey("userharbor_roles.role", ondelete="CASCADE"),
+            primary_key=True,
+        )
+        permission: Mapped[str] = mapped_column(
+            ForeignKey("userharbor_permissions.permission", ondelete="CASCADE"),
+            primary_key=True,
+        )
+
     return Models(
         Base=UserHarborBase,
         UserModel=user_model,
         EmailVerificationModel=EmailVerificationModel,
         SessionModel=SessionModel,
         PasswordResetModel=PasswordResetModel,
+        RoleModel=RoleModel,
+        PermissionModel=PermissionModel,
+        UserRoleModel=UserRoleModel,
+        RolePermissionModel=RolePermissionModel,
     )
