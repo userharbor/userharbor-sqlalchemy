@@ -21,15 +21,15 @@
 
 It stores:
 
-* users,
-* email verification tokens,
-* sessions,
-* password reset tokens,
-* password hashes,
-* roles,
-* permissions,
-* user-to-role assignments,
-* role-to-permission assignments.
+* users
+* email verification tokens
+* sessions
+* password reset tokens
+* password hashes
+* roles
+* permissions
+* user-to-role assignments
+* role-to-permission assignments
 
 The package only handles persistence. It does not send emails, expose HTTP endpoints,
 or implement application-specific authentication flows.
