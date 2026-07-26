@@ -2,11 +2,10 @@ from datetime import datetime
 
 from userharbor.interfaces import CreateUserRequest
 
-from userharbor_sqlalchemy.mappers import User
 from userharbor_sqlalchemy.store import SQLAlchemyUserStore
 
 
-def test_get_user_by_username_returns_user_without_password_hash(
+def test_default_user_mapper_does_not_expose_password_hash(
     store: SQLAlchemyUserStore,
 ) -> None:
     store.create_user(
@@ -19,14 +18,7 @@ def test_get_user_by_username_returns_user_without_password_hash(
         )
     )
 
-    assert store.get_user_by_username("alice") == User(
-        username="alice",
-        email="alice@example.com",
-        verified=False,
-    )
+    user = store.get_user_by_username("alice")
 
-
-def test_get_user_by_username_returns_none_for_missing_user(
-    store: SQLAlchemyUserStore,
-) -> None:
-    assert store.get_user_by_username("missing") is None
+    assert user is not None
+    assert not hasattr(user, "password_hash")

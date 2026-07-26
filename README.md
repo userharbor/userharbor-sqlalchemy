@@ -31,6 +31,10 @@ It stores:
 * user-to-role assignments
 * role-to-permission assignments
 
+Each user has at most one active email verification token and one active
+password reset token. Storing a new token of either kind removes that user's
+previous token. Users can have multiple active sessions.
+
 The package only handles persistence. It does not send emails, expose HTTP endpoints,
 or implement application-specific authentication flows.
 

@@ -120,6 +120,12 @@ class SQLAlchemyUserStore(UserStore[UserT], Generic[UserT]):
 
     def set_email_verification(self, verification: UserToken) -> None:
         with self._session_scope() as session:
+            session.execute(
+                delete(self._models.EmailVerificationModel).where(
+                    self._models.EmailVerificationModel.username
+                    == verification.username
+                )
+            )
             session.add(
                 self._models.EmailVerificationModel(
                     username=verification.username,
@@ -192,6 +198,11 @@ class SQLAlchemyUserStore(UserStore[UserT], Generic[UserT]):
 
     def set_password_reset(self, reset: UserToken) -> None:
         with self._session_scope() as session:
+            session.execute(
+                delete(self._models.PasswordResetModel).where(
+                    self._models.PasswordResetModel.username == reset.username
+                )
+            )
             session.add(
                 self._models.PasswordResetModel(
                     username=reset.username,

@@ -33,6 +33,11 @@ def store() -> Iterator[SQLAlchemyUserStore]:
 
 
 @pytest.fixture
+def user_store(store: SQLAlchemyUserStore) -> SQLAlchemyUserStore:
+    return store
+
+
+@pytest.fixture
 def session(store: SQLAlchemyUserStore) -> Iterator[Session]:
     with store._session_factory() as session:
         yield session
