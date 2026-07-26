@@ -1,6 +1,6 @@
 [project]
 name = "userharbor-sqlalchemy"
-version = "0.4.0"
+version = "0.5.0"
 description = "SQLAlchemy integration for UserHarbor, a framework agnostic user management system for Python applications."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -29,7 +29,7 @@ classifiers = [
 ]
 dependencies = [
   "sqlalchemy>=2.0.51",
-  "userharbor>=0.5.0",
+  "userharbor>=0.7.0",
 ]
 
 [project.urls]

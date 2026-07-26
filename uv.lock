@@ -268,7 +268,7 @@ name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+    { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219", size = 30371, upload-time = "2025-11-21T23:01:54.787Z" }
 wheels = [
@@ -556,14 +556,14 @@ wheels = [
 
 [[package]]
 name = "userharbor"
-version = "0.5.0"
+version = "0.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pwdlib", extra = ["argon2"] },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7e/cf/edcec0f76474935839327af71b30f1f4dacc229162e62fbc8ad6de59b85e/userharbor-0.5.0.tar.gz", hash = "sha256:8842fc33791b0d06561c0bfb897101209069a256e5ef9f626bc597cbe4041bd6", size = 6967, upload-time = "2026-06-30T08:57:17.568Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2e/e6/10332259e7cf75580372e9d2b15286d08acb3b21b7c9528bbcaec6b03d68/userharbor-0.7.0.tar.gz", hash = "sha256:372b261ec884b7897218d52a33621ea4e2a7bda9848959769a9393c148db2da8", size = 11339, upload-time = "2026-07-26T14:44:48.675Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/31/1f/62018aafe42d83827f8e7358ef432da75830948287f0ffc806094b27ef1a/userharbor-0.5.0-py3-none-any.whl", hash = "sha256:b5e86dbbb9e13edd8d51980fc0ea75573bca12b56f758649bed87dbfbfd5f3dc", size = 8787, upload-time = "2026-06-30T08:57:16.52Z" },
+    { url = "https://files.pythonhosted.org/packages/96/e0/d450c9ccc7e87161d6ddce5cb77fcd3f128cf4f5d8c9b68702c18c81f141/userharbor-0.7.0-py3-none-any.whl", hash = "sha256:5b7ab79045c5c6f702466cc9bd3ac6c1ba094e5bc2b45258fc05c22ea6d807e4", size = 17811, upload-time = "2026-07-26T14:44:47.603Z" },
 ]
 
 [[package]]
@@ -584,7 +584,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "sqlalchemy", specifier = ">=2.0.51" },
-    { name = "userharbor", specifier = ">=0.5.0" },
+    { name = "userharbor", specifier = ">=0.7.0" },
 ]
 
 [package.metadata.requires-dev]
