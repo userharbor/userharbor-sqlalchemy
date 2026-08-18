@@ -11,6 +11,7 @@ class UserModelProtocol(Protocol):
     __tablename__: ClassVar[str]
     metadata: ClassVar[MetaData]
     username: Mapped[str]
+    username_key: Mapped[str]
     email: Mapped[str]
     password_hash: Mapped[str]
     verified: Mapped[bool]
@@ -66,6 +67,9 @@ def create_models(user_model: type[UserModelProtocol] | None = None) -> Models:
             __tablename__ = "userharbor_users"
 
             username: Mapped[str] = mapped_column(String(255), primary_key=True)
+            username_key: Mapped[str] = mapped_column(
+                String(255), unique=True, index=True
+            )
             email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
             password_hash: Mapped[str] = mapped_column(String(512))
             verified: Mapped[bool] = mapped_column(Boolean, default=False)

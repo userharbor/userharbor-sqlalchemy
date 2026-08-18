@@ -38,6 +38,10 @@ previous token. Users can have multiple active sessions.
 The package only handles persistence. It does not send emails, expose HTTP endpoints,
 or implement application-specific authentication flows.
 
+Usernames preserve their original casing while lookup and uniqueness use a
+Unicode case-folded key. The default model stores that key in the unique,
+indexed `username_key` column.
+
 ---
 
 ## Installation
@@ -137,6 +141,23 @@ verification and password reset messages through your email provider.
 UserHarbor for multi-step operations such as email verification, password reset,
 password change, account deletion, and role or permission assignment. Successful
 blocks are committed; exceptions roll back all changes from the block.
+
+---
+
+## Custom user models
+
+A custom user model must provide `username_key` in addition to `username`,
+`email`, `password_hash`, and `verified`:
+
+```python
+username: Mapped[str] = mapped_column(String(255), primary_key=True)
+username_key: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+```
+
+`SQLAlchemyUserStore.create_user()` fills `username_key` with
+`username.casefold()`. The unique constraint prevents accounts whose usernames
+differ only by casing, while `username` keeps the spelling selected during
+registration.
 
 ---
 

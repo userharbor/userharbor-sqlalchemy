@@ -19,6 +19,7 @@ class AppUser(AppBase):
     __tablename__ = "app_users"
 
     username: Mapped[str] = mapped_column(String(255), primary_key=True)
+    username_key: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(512))
     verified: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -78,9 +79,10 @@ def test_store_uses_custom_user_model_and_mapper() -> None:
         with store._session_factory() as session:
             app_user = session.get(AppUser, "alice")
             assert app_user is not None
+            assert app_user.username_key == "alice"
             assert app_user.password_hash == "password-hash"
 
-        assert store.get_user_by_username("alice") == AppPublicUser(
+        assert store.get_user_by_username("ALICE") == AppPublicUser(
             username="alice",
             email="alice@example.com",
             verified=True,

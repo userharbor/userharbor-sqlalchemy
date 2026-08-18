@@ -74,6 +74,7 @@ class SQLAlchemyUserStore(UserStore[UserT], Generic[UserT]):
             session.add(
                 self._models.UserModel(
                     username=user.username,
+                    username_key=user.username.casefold(),
                     email=user.email,
                     password_hash=user.password_hash,
                     verified=False,
@@ -101,7 +102,11 @@ class SQLAlchemyUserStore(UserStore[UserT], Generic[UserT]):
 
     def get_user_by_username(self, username: str) -> UserT | None:
         with self._session_scope() as session:
-            user = session.get(self._models.UserModel, username)
+            user = session.scalar(
+                select(self._models.UserModel).where(
+                    self._models.UserModel.username_key == username.casefold()
+                )
+            )
             return self._user_mapper(user) if user else None
 
     def get_user_by_email(self, email: str) -> UserT | None:
