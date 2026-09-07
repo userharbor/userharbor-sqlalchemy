@@ -230,6 +230,14 @@ class SQLAlchemyUserStore(UserStore[UserT], Generic[UserT]):
             if reset:
                 session.delete(reset)
 
+    def remove_password_reset_for_user(self, username: str) -> None:
+        with self._session_scope() as session:
+            session.execute(
+                delete(self._models.PasswordResetModel).where(
+                    self._models.PasswordResetModel.username == username
+                )
+            )
+
     def create_role(self, role: str) -> None:
         with self._session_scope() as session:
             session.add(self._models.RoleModel(role=role))
