@@ -2,10 +2,10 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import cast
 
-from sqlalchemy import Boolean, String, create_engine, event
+from sqlalchemy import Boolean, String, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 from sqlalchemy.pool import StaticPool
-from userharbor.interfaces import CreateUserRequest
+from userharbor.interfaces import CreateUserRequest, UserToken
 
 from userharbor_sqlalchemy.models import UserModelProtocol
 from userharbor_sqlalchemy.store import SQLAlchemyUserStore
@@ -40,12 +40,6 @@ def test_store_uses_custom_user_model_and_mapper() -> None:
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-
-    @event.listens_for(engine, "connect")
-    def enable_foreign_keys(dbapi_connection, _connection_record) -> None:
-        cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA foreign_keys=ON")
-        cursor.close()
 
     def map_app_user(model: UserModelProtocol) -> AppPublicUser:
         app_user = cast(AppUser, model)
@@ -103,6 +97,30 @@ def test_store_uses_custom_user_model_and_mapper() -> None:
 
         assert store.get_user_roles("alice") == {"admin"}
         assert store.get_user_permissions("alice") == {"users.delete"}
+
+        store.add_session(UserToken("alice", "session-token-hash", expires_at))
+        store.set_password_reset(UserToken("alice", "reset-token-hash", expires_at))
+
+        store.delete_user("alice")
+
+        assert store.get_user_by_username("alice") is None
+        assert store.get_email_verification("verification-token-hash") is None
+        assert store.get_session("session-token-hash") is None
+        assert store.get_password_reset("reset-token-hash") is None
+        assert store.get_user_roles("alice") == set()
+        assert store.get_user_permissions("alice") == set()
+
+        store.create_user(
+            CreateUserRequest(
+                username="alice",
+                email="new-owner@example.com",
+                password_hash="new-password-hash",
+                verification_token_hash="new-verification-token-hash",
+                expires_at=expires_at,
+            )
+        )
+        assert store.get_user_roles("alice") == set()
+        assert store.get_user_permissions("alice") == set()
     finally:
         store.metadata.drop_all(engine)
         engine.dispose()

@@ -98,6 +98,14 @@ class SQLAlchemyUserStore(UserStore[UserT], Generic[UserT]):
         with self._session_scope() as session:
             user = session.get(self._models.UserModel, username)
             if user:
+                # Do not rely on database cascades being enabled.
+                for model in (
+                    self._models.UserRoleModel,
+                    self._models.EmailVerificationModel,
+                    self._models.SessionModel,
+                    self._models.PasswordResetModel,
+                ):
+                    session.execute(delete(model).where(model.username == username))
                 session.delete(user)
 
     def get_user_by_username(self, username: str) -> UserT | None:
