@@ -1,6 +1,6 @@
 [project]
 name = "userharbor-sqlalchemy"
-version = "0.6.1"
+version = "0.6.2"
 description = "SQLAlchemy integration for UserHarbor, a framework agnostic user management system for Python applications."
 readme = "README.md"
 requires-python = ">=3.10"
