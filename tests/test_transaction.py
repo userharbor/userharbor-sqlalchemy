@@ -22,12 +22,10 @@ def test_nested_transaction_changes_are_hidden_until_outer_commit(
     with store.transaction():
         store.create_user(request)
         with store.transaction():
-            store.add_session(
-                UserToken("alice", "session-token-hash", expires_at)
-            )
+            store.add_session(UserToken("alice", "session-token-hash", expires_at))
 
-        assert session.get(store._models.UserModel, "alice") is None
+        assert session.get(store._models.UserModel.__mapper__, "alice") is None
         assert session.get(store._models.SessionModel, "session-token-hash") is None
 
-    assert session.get(store._models.UserModel, "alice") is not None
+    assert session.get(store._models.UserModel.__mapper__, "alice") is not None
     assert session.get(store._models.SessionModel, "session-token-hash") is not None

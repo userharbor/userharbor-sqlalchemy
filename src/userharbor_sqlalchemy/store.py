@@ -16,7 +16,7 @@ from userharbor.interfaces import (
 )
 
 from .mappers import default_user_mapper, token_mapper
-from .models import UserModelProtocol, create_models
+from .models import UserModelClassProtocol, UserModelProtocol, create_models
 
 SessionFactory = Callable[[], Session]
 
@@ -25,7 +25,7 @@ class SQLAlchemyUserStore(UserStore[UserT], Generic[UserT]):
     def __init__(
         self,
         session_factory: SessionFactory,
-        user_model: type[UserModelProtocol] | None = None,
+        user_model: UserModelClassProtocol | None = None,
         user_mapper: Callable[[UserModelProtocol], UserT] | None = None,
     ) -> None:
         self._session_factory = session_factory
@@ -96,13 +96,13 @@ class SQLAlchemyUserStore(UserStore[UserT], Generic[UserT]):
 
     def set_user_verified(self, username: str) -> None:
         with self._session_scope() as session:
-            user = session.get(self._models.UserModel, username)
+            user = session.get(self._models.UserModel.__mapper__, username)
             if user:
                 user.verified = True
 
     def delete_user(self, username: str) -> None:
         with self._session_scope() as session:
-            user = session.get(self._models.UserModel, username)
+            user = session.get(self._models.UserModel.__mapper__, username)
             if user:
                 # Do not rely on database cascades being enabled.
                 for model in (
@@ -117,7 +117,7 @@ class SQLAlchemyUserStore(UserStore[UserT], Generic[UserT]):
     def get_user_by_username(self, username: str) -> UserT | None:
         with self._session_scope() as session:
             user = session.scalar(
-                select(self._models.UserModel).where(
+                select(self._models.UserModel.__mapper__).where(
                     self._models.UserModel.username_key == username.casefold()
                 )
             )
@@ -126,7 +126,7 @@ class SQLAlchemyUserStore(UserStore[UserT], Generic[UserT]):
     def get_user_by_email(self, email: str) -> UserT | None:
         with self._session_scope() as session:
             user = session.scalar(
-                select(self._models.UserModel).where(
+                select(self._models.UserModel.__mapper__).where(
                     self._models.UserModel.email == email
                 )
             )
@@ -144,7 +144,7 @@ class SQLAlchemyUserStore(UserStore[UserT], Generic[UserT]):
         field = order.removeprefix("-")
         column = model.username_key if field == "username" else getattr(model, field)
         ordering = column.desc() if order.startswith("-") else column.asc()
-        statement = select(model)
+        statement = select(model.__mapper__)
         query = (query or "").strip()
         if query:
             statement = statement.where(
@@ -233,14 +233,14 @@ class SQLAlchemyUserStore(UserStore[UserT], Generic[UserT]):
 
     def get_password_hash(self, username: str) -> str:
         with self._session_scope() as session:
-            user = session.get(self._models.UserModel, username)
+            user = session.get(self._models.UserModel.__mapper__, username)
             if not user:
                 raise KeyError(f"User not found: {username}")
             return user.password_hash
 
     def set_password_hash(self, username: str, password_hash: str) -> None:
         with self._session_scope() as session:
-            user = session.get(self._models.UserModel, username)
+            user = session.get(self._models.UserModel.__mapper__, username)
             if not user:
                 raise KeyError(f"User not found: {username}")
             user.password_hash = password_hash
