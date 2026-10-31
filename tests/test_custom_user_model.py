@@ -90,6 +90,33 @@ def test_store_uses_custom_user_model_and_mapper() -> None:
         )
         assert store.get_email_verification("verification-token-hash") is not None
 
+        store.create_user(
+            CreateUserRequest(
+                username="bob",
+                email="bob@example.com",
+                password_hash="password-hash",
+                verification_token_hash="bob-verification-token-hash",
+                expires_at=expires_at,
+            )
+        )
+        with store._session_factory() as session:
+            alice = session.get(AppUser, "alice")
+            bob = session.get(AppUser, "bob")
+            assert alice is not None
+            assert bob is not None
+            alice.display_name = "Zoe"
+            bob.display_name = "Amy"
+            session.commit()
+
+        page = store.list_users(order="display_name")
+        assert [user.username for user in page.items] == ["bob", "alice"]
+        assert [user.display_name for user in page.items] == ["Amy", "Zoe"]
+        assert page.total == 2
+
+        page = store.list_users(order="-display_name", limit=1)
+        assert page.items == [AppPublicUser("alice", "alice@example.com", True, "Zoe")]
+        assert page.total == 2
+
         store.create_role("admin")
         store.create_permission("users.delete")
         store.grant_permission_to_role("admin", "users.delete")

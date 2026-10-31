@@ -22,3 +22,8 @@ def test_default_user_mapper_does_not_expose_password_hash(
 
     assert user is not None
     assert not hasattr(user, "password_hash")
+
+    page = store.list_users()
+
+    assert page.total == 1
+    assert not hasattr(page.items[0], "password_hash")

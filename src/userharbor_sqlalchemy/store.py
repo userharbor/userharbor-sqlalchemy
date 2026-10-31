@@ -1,13 +1,19 @@
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
 from datetime import datetime
-from typing import Callable, Generic, cast
+from typing import Generic, cast
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 from sqlalchemy.schema import MetaData
-from userharbor.interfaces import CreateUserRequest, UserStore, UserT, UserToken
+from userharbor.interfaces import (
+    CreateUserRequest,
+    UserList,
+    UserStore,
+    UserT,
+    UserToken,
+)
 
 from .mappers import default_user_mapper, token_mapper
 from .models import UserModelProtocol, create_models
@@ -125,6 +131,41 @@ class SQLAlchemyUserStore(UserStore[UserT], Generic[UserT]):
                 )
             )
             return self._user_mapper(user) if user else None
+
+    def list_users(
+        self,
+        *,
+        limit: int = 50,
+        offset: int = 0,
+        order: str = "username",
+        query: str | None = None,
+    ) -> UserList[UserT]:
+        model = self._models.UserModel
+        field = order.removeprefix("-")
+        column = model.username_key if field == "username" else getattr(model, field)
+        ordering = column.desc() if order.startswith("-") else column.asc()
+        statement = select(model)
+        query = (query or "").strip()
+        if query:
+            statement = statement.where(
+                or_(
+                    model.username_key.contains(query.casefold(), autoescape=True),
+                    func.lower(model.email).contains(query.lower(), autoescape=True),
+                )
+            )
+        with self._session_scope() as session:
+            total = session.scalar(
+                select(func.count()).select_from(statement.subquery())
+            )
+            users = session.scalars(
+                statement.order_by(ordering, model.username_key.asc())
+                .limit(limit)
+                .offset(offset)
+            )
+            return UserList(
+                items=[self._user_mapper(user) for user in users],
+                total=total or 0,
+            )
 
     def get_email_verification(self, token_hash: str) -> UserToken | None:
         with self._session_scope() as session:
